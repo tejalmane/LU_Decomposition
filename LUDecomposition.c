@@ -1,10 +1,10 @@
-%%writefile p2ludecompose.c
+%%writefile LUDecomposition.c
+//PRN 2019BTEIT00045
 //LU Decomposition Algorithm
 #include<stdio.h>
 #include<stdlib.h>
-//AX=B  Consider A=LU where L is lower Triangular matrix
-//U is upper triangular matrix
-// LUX=B Let Y=UX hence LY=B
+#include<time.h>
+#define star "\n\n*******************************************************\n\n"
 
 void main()
 {
@@ -19,12 +19,13 @@ void main()
         printf("Error! opening output file");
         exit(1);
     }
-    float A[3][3]= {0},L[3][3]= {0}, U[3][3];
-    float B[3]= {0}, X[3]= {0},Y[3]= {0};
+    float A[20][20]= {0},L[20][20]= {0}, U[20][20];
+    float B[20]= {0}, X[20]= {0},Y[20]= {0};
     int i,j,k,n;
+ 
+    printf(star);
     printf("Enter the order of square matrix: ");
     scanf("%d",&n);
-    //reading input from file
     fseek(input, 0, SEEK_SET);
     for(i=0; i<n; i++)
     {
@@ -37,54 +38,51 @@ void main()
     {
         fread(&B[i], sizeof(float), 1, input);
     }
+    //  calc time for the program
+    clock_t begin = clock();
+        for(j=0; j<n; j++)
+    {
+        for(i=0; i<n; i++)
+        {
+            if(i<=j)
+            {
+                U[i][j]=A[i][j];
+                for(k=0; k<i-1; k++)
+                    U[i][j]-=L[i][k]*U[k][j];
+                if(i==j)
+                    L[i][j]=1;
+                else
+                    L[i][j]=0;
+            }
+            else
+            {
+                L[i][j]=A[i][j];
+                for(k=0; k<=j-1; k++)
+                    L[i][j]-=L[i][k]*U[k][j];
+                L[i][j]/=U[j][j];
+                U[i][j]=0;
+            }
+        }
+    }
 
-   //calculating upper triangular matrix
-   for (int i = 0; i < n; i++)
-	{
-		// Upper Triangular
-		for (int k = i; k < n; k++)
-		{
-			// Summation of L(i, j) * U(j, k)
-			int sum = 0;
-			for (int j = 0; j < i; j++)
-				sum += (L[i][j] * U[j][k]);
-
-			// Evaluating U(i, k)
-			U[i][k] = A[i][k] - sum;
-		}
-
-		// Lower Triangular
-		for (int k = i; k < n; k++)
-		{
-			if (i == k)
-	       L[i][i] = 1; // Diagonal as 1
-			else
-			{
-				// Summation of L(k, j) * U(j, i)
-				int sum = 0;
-				for (int j = 0; j < i; j++)
-					sum += (L[k][j] * U[j][i]);
-
-				// Evaluating L(k, i)
-				L[k][i]
-					= (A[k][i] - sum) / U[i][i];
-			}
-		}
-	}
-    printf("Lower triangular matrix\n[L]: \n");
+    printf("\n");
+    printf(star);
+    printf("[L]: \n");
     for(i=0; i<n; i++)
     {
         for(j=0; j<n; j++)
             printf("%9.3f",L[i][j]);
         printf("\n");
     }
-    printf("\n\nUpper triangular matrix\n[U]: \n");
+    printf(star);
+    printf("\n\n[U]: \n");
     for(i=0; i<n; i++)
     {
         for(j=0; j<n; j++)
             printf("%9.3f",U[i][j]);
         printf("\n");
     }
+   
     for(i=0; i<n; i++)
     {
         Y[i]=B[i];
@@ -93,6 +91,7 @@ void main()
             Y[i]-=L[i][j]*Y[j];
         }
     }
+    printf(star);
     printf("\n\n[Y]: \n");
     for(i=0; i<n; i++)
     {
@@ -107,13 +106,20 @@ void main()
         }
         X[i]/=U[i][i];
     }
-    printf("\n\nOUTPUT\n[X]: \n");
-    
+ 
+    clock_t end = clock();
+
+
+    printf(star);
+    printf("\n\n[X]: \n");
     for(i=0; i<n; i++)
     {
-        printf("%9.3f",X[i]);
+        printf("%9.3f ",X[i]);
         fwrite(&X[i],sizeof(X[i]),1,output);
     }
+  printf(star);
+  double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+  printf("Compute time will be : %f",time_spent);
     fclose(input);
     fclose(output);
 }
